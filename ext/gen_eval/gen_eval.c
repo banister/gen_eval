@@ -55,11 +55,25 @@ rb_capture(VALUE self) {
 
 /** ruby 1.9 funcs **/
 #ifdef RUBY_19
+
+/* we do not want any ROBJECT_EMBED objects, so ensure we have > 3 ivars */
+static void
+force_iv_tbl(VALUE obj)
+{
+  rb_iv_set(obj, "__force_iv_tbl_1__", Qtrue);
+  rb_iv_set(obj, "__force_iv_tbl_2__", Qtrue);
+  rb_iv_set(obj, "__force_iv_tbl_3__", Qtrue);
+  rb_iv_set(obj, "__force_iv_tbl_4__", Qtrue);
+}
+
 void
 redirect_iv_for_object(VALUE obj, VALUE dest)
 {
     if(TYPE(obj) != T_OBJECT)
         rb_raise(rb_eArgError, "must provide a T_OBJECT");
+
+    /* ensure ivars are stored on the heap and not embedded */
+    force_iv_tbl(obj);
 
     if (!(RBASIC(dest)->flags & ROBJECT_EMBED) && ROBJECT_IVPTR(dest)) {
         rb_raise(rb_eArgError, "im sorry gen_eval does not yet work with this type of ROBJECT");

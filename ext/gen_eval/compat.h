@@ -5,11 +5,6 @@
 
 #include <ruby.h>
 
-/* this is the test we use to identify ruby 1.9.1 */
-#ifdef RCLASS_M_TBL
-# define RUBY_19
-#endif
-
 /* macros for backwards compatibility with 1.8 */
 #ifndef RUBY_19
 # define RCLASS_M_TBL(c) (RCLASS(c)->m_tbl)
