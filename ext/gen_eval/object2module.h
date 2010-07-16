@@ -5,7 +5,6 @@
         
 VALUE rb_gen_include(int argc, VALUE * argv, VALUE self);
 VALUE rb_gen_extend(int argc, VALUE * argv, VALUE self);
-VALUE rb_to_module(VALUE self);
-VALUE rb_reset_tbls(VALUE self);
+void Init_object2module(void);
 
 #endif

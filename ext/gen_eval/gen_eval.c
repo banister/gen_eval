@@ -198,14 +198,11 @@ rb_gen_eval(int argc, VALUE * argv, VALUE self) {
 void
 Init_gen_eval() {
 
+    Init_object2module();
+
     rb_define_method(rb_cObject, "gen_eval", rb_gen_eval, -1);
     rb_define_method(rb_cObject, "capture", rb_capture, 0);
     
-    rb_define_method(rb_cObject, "to_module", rb_to_module , 0);
-    rb_define_method(rb_cObject, "reset_tbls", rb_reset_tbls , 0);
-    rb_define_method(rb_cObject, "gen_extend", rb_gen_extend, -1);
-    rb_define_method(rb_cModule, "gen_include", rb_gen_include, -1);
-
     /* below is much too hard to achieve in pure C */
     rb_eval_string("class Proc;"
                    "    def __context__;"

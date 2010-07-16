@@ -31,7 +31,8 @@ class_alloc(VALUE flags, VALUE klass)
 
 /* a modified version of include_class_new from class.c */
 static VALUE
-j_class_new(VALUE module, VALUE sup) {
+j_class_new(VALUE module, VALUE sup)
+{
 
 #ifdef RUBY_19
     VALUE klass = class_alloc(T_ICLASS, rb_cClass);
@@ -40,7 +41,7 @@ j_class_new(VALUE module, VALUE sup) {
     OBJSETUP(klass, rb_cClass, T_ICLASS);
 #endif
 
-    if (BUILTIN_TYPE(module) == T_ICLASS) {
+    if (TYPE(module) == T_ICLASS) {
         module = KLASS_OF(module);
     }
 
@@ -77,8 +78,9 @@ j_class_new(VALUE module, VALUE sup) {
     return (VALUE)klass;
 }
 
-VALUE
-rb_to_module(VALUE self) {
+static VALUE
+to_module(VALUE self)
+{
     VALUE rclass, chain_start, jcur, klass;
 
     switch(BUILTIN_TYPE(self)) {
@@ -110,8 +112,9 @@ rb_to_module(VALUE self) {
     return chain_start;
 }
 
-VALUE
-rb_reset_tbls(VALUE self) {
+static VALUE
+reset_tbls(VALUE self)
+{
     RCLASS_IV_TBL(self) = (struct st_table *) 0;
     RCLASS_M_TBL(self) = (struct st_table *) st_init_numtable();
     return Qnil;
@@ -119,7 +122,8 @@ rb_reset_tbls(VALUE self) {
 
 /* cannot simply forward to gen_include as need to invoke 'extended' hook */
 VALUE
-rb_gen_extend(int argc, VALUE * argv, VALUE self) {
+rb_gen_extend(int argc, VALUE * argv, VALUE self)
+{
     int i;
 
     if (argc == 0) rb_raise(rb_eArgError, "wrong number of arguments (0 for 1)");
@@ -127,40 +131,40 @@ rb_gen_extend(int argc, VALUE * argv, VALUE self) {
     rb_singleton_class(self);
 
     for(i = 0; i < argc; i++) {
-        VALUE mod = rb_funcall(argv[i], rb_intern("to_module"), 0);
+        VALUE mod = to_module(argv[i]);
         rb_funcall(mod, rb_intern("extend_object"), 1, self);
         rb_funcall(mod, rb_intern("extended"), 1, self);
         
         /* only redirect if argv[i] is not a module */
-        if(argv[i] != mod) rb_reset_tbls(mod);
+        if(argv[i] != mod) reset_tbls(mod);
     }
 
     return self;
 }
 
 VALUE
-rb_gen_include(int argc, VALUE * argv, VALUE self) {
+rb_gen_include(int argc, VALUE * argv, VALUE self)
+{
     int i;
 
     if (argc == 0) rb_raise(rb_eArgError, "wrong number of arguments (0 for 1)");
 
     for(i = 0; i < argc; i++) {
-        VALUE mod = rb_funcall(argv[i], rb_intern("to_module"), 0);
+      VALUE mod = to_module(argv[i]);
         rb_funcall(mod, rb_intern("append_features"), 1, self);
         rb_funcall(mod, rb_intern("included"), 1, self);
         
-        if(argv[i] != mod) rb_reset_tbls(mod);       
+        if(argv[i] != mod) reset_tbls(mod);       
     }
 
     return self;
 }
  
 
-void Init_object2module() {
-
-    rb_define_method(rb_cObject, "to_module", rb_to_module , 0);
+void
+Init_object2module()
+{
     rb_define_method(rb_cObject, "gen_extend", rb_gen_extend, -1);
     rb_define_method(rb_cModule, "gen_include", rb_gen_include, -1);
-    rb_define_method(rb_cModule, "reset_tbls", rb_reset_tbls, 0);
 }
 
