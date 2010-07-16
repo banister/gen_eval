@@ -23,3 +23,43 @@ class Proc
 end
 
 
+class Object
+    
+    def gen_eval(*mods, &block)
+      raise "block needed" if !block
+
+      mods = self if mods.empty?
+
+      raise "cannot gen_eval on Object" if Array(mods).include?(Object)
+
+      mirror_context = block.__context__.__mirror__
+      mirror_context.gen_extend(*mods)
+      mirror_context.__set_hidden_self__(self)
+
+      begin
+          m = mirror_context.is_a?(Module) ? :module_eval : :instance_eval
+          result = mirror_context.send(m, &block)
+      ensure
+          mirror_context.__remove_hidden_self__
+          mirror_context.__unmirror__
+      end
+
+      result
+    end
+
+    alias_method :gen_eval_with, :gen_eval
+
+    def capture
+        raise "block needed" if !block
+
+        hidden_self = self.__retrieve_hidden_self__
+
+        if !hidden_self
+            result = hidden_self.instance_eval(&block)
+        else
+            result = yield
+        end
+
+        result
+    end
+end
