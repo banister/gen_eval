@@ -5,10 +5,13 @@
 
 #include <ruby.h>
 
-VALUE rb_gen_eval(int argc, VALUE * argv, VALUE self);
-VALUE rb_capture(VALUE self);
 VALUE retrieve_hidden_self(VALUE duped_context);
 void set_hidden_self(VALUE duped_context, VALUE hidden_self);
+VALUE remove_hidden_self(VALUE duped_context);
+VALUE rb_mirror_object(VALUE context);
+VALUE rb_unmirror_object(VALUE duped_context);
+
+
 
 /* change self to hidden self if __hidden_self__ defined */
 #define ADJUST_SELF(X)                                                    \

@@ -54,7 +54,7 @@ class Object
 
         hidden_self = self.__retrieve_hidden_self__
 
-        if !hidden_self
+        if hidden_self
             result = hidden_self.instance_eval(&block)
         else
             result = yield

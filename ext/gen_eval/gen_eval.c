@@ -58,7 +58,7 @@ force_iv_tbl(VALUE obj)
   rb_iv_set(obj, "__force_iv_tbl_4__", Qtrue);
 }
 
-void
+static void
 redirect_iv_for_object(VALUE obj, VALUE dest)
 {
     if(TYPE(obj) != T_OBJECT)
@@ -81,7 +81,7 @@ redirect_iv_for_object(VALUE obj, VALUE dest)
     }
 }
 
-void
+static void
 release_iv_for_object(VALUE obj)
 {
     if(TYPE(obj) != T_OBJECT)
@@ -96,7 +96,8 @@ release_iv_for_object(VALUE obj)
 /** end of Ruby 1.9 funcs **/
 
 VALUE
-rb_mirror_object(VALUE context) {
+rb_mirror_object(VALUE context)
+{
     VALUE duped_context;
   
 #ifdef RUBY_19
@@ -155,7 +156,8 @@ rb_unmirror_object(VALUE duped_context)
 }
   
 void
-Init_gen_eval() {
+Init_gen_eval()
+{
 
     Init_object2module();
 
