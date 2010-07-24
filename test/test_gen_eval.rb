@@ -99,7 +99,7 @@ class Gen_EvalTest < Test::Unit::TestCase
             end
         end
 
-        o.gen_eval { set_x(777) }
+       o.gen_eval { set_x(777) }
 
         assert_equal nil, o.get_x
         

@@ -25,15 +25,15 @@ end
 
 class Object
     
-    def gen_eval(*mods, &block)
+    def gen_eval(*objs, &block)
       raise "block needed" if !block
 
-      mods = self if mods.empty?
+      objs = [self] if objs.empty?
 
-      raise "cannot gen_eval on Object" if Array(mods).include?(Object)
+      raise "cannot gen_eval on Object" if objs.include?(Object)
 
       mirror_context = block.__context__.__mirror__
-      mirror_context.gen_extend(*mods)
+      mirror_context.gen_extend(*objs)
       mirror_context.__set_hidden_self__(self)
 
       begin
@@ -49,7 +49,7 @@ class Object
 
     alias_method :gen_eval_with, :gen_eval
 
-    def capture
+    def capture(&block)
         raise "block needed" if !block
 
         hidden_self = self.__retrieve_hidden_self__
@@ -63,3 +63,7 @@ class Object
         result
     end
 end
+
+
+
+  

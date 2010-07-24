@@ -10,7 +10,7 @@
 VALUE
 retrieve_hidden_self(VALUE duped_context)
 {
-  VALUE thread_id, unique_name, hidden_self;
+    VALUE thread_id, unique_name, hidden_self;
     
     /* retrieve hidden self (if it exists) */
     thread_id = rb_funcall(rb_obj_id(rb_thread_current()), rb_intern("to_s"), 0);
@@ -24,7 +24,7 @@ VALUE
 remove_hidden_self(VALUE duped_context)
 {
     /* retrieve hidden self (if it exists) */
-  VALUE thread_id, unique_name;
+    VALUE thread_id, unique_name;
     
     thread_id = rb_funcall(rb_obj_id(rb_thread_current()), rb_intern("to_s"), 0);
     unique_name = rb_str_plus(rb_str_new2("__hidden_self__"), thread_id);
@@ -45,8 +45,17 @@ set_hidden_self(VALUE duped_context, VALUE hidden_self)
     return rb_ivar_set(duped_context, rb_to_id(unique_name), hidden_self);
 }
 
-/** ruby 1.9 funcs **/
-#ifdef RUBY_19
+static void
+save_m_tbl(VALUE klass)
+{
+    rb_iv_set(klass, "__saved_m_tbl__", (VALUE)RCLASS_M_TBL(klass));
+}
+
+static void
+restore_m_tbl(VALUE klass)
+{
+    RCLASS_M_TBL(klass) = (struct st_table *)rb_iv_get(klass, "__saved_m_tbl__");
+}
 
 /* we do not want any ROBJECT_EMBED objects, so ensure we have > 3 ivars */
 static void
@@ -58,6 +67,7 @@ force_iv_tbl(VALUE obj)
   rb_iv_set(obj, "__force_iv_tbl_4__", Qtrue);
 }
 
+#ifdef RUBY_19
 static void
 redirect_iv_for_object(VALUE obj, VALUE dest)
 {
@@ -123,9 +133,13 @@ rb_mirror_object(VALUE context)
         if(TYPE(context) == T_OBJECT)
             redirect_iv_for_object(context, duped_context);
         else {
+            save_m_tbl(duped_context);
+            RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
             RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
         }
 #else
+        save_m_tbl(duped_context);
+        RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
         RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
 #endif        
 
@@ -149,9 +163,11 @@ rb_unmirror_object(VALUE duped_context)
         release_iv_for_object(duped_context);
     else {
         RCLASS_IV_TBL(duped_context) = (struct st_table *) 0;
+        restore_m_tbl(duped_context);
     }
 #else
     RCLASS_IV_TBL(duped_context) = (struct st_table *) 0;
+    restore_m_tbl(duped_context);
 #endif
 }
   
