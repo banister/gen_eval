@@ -4,7 +4,6 @@
  *                                                                */
 
 #include <ruby.h>
-#include "object2module.h"
 #include "compat.h"
 
 VALUE
@@ -29,7 +28,9 @@ remove_hidden_self(VALUE duped_context)
     thread_id = rb_funcall(rb_obj_id(rb_thread_current()), rb_intern("to_s"), 0);
     unique_name = rb_str_plus(rb_str_new2("__hidden_self__"), thread_id);
     
-    return rb_obj_remove_instance_variable(duped_context, unique_name);
+    rb_obj_remove_instance_variable(duped_context, unique_name);
+
+    return Qnil;
 }
 
 VALUE
@@ -42,7 +43,9 @@ set_hidden_self(VALUE duped_context, VALUE hidden_self)
     unique_name = rb_str_plus(rb_str_new2("__hidden_self__"), thread_id);
 
     /* store self in hidden var in duped context */
-    return rb_ivar_set(duped_context, rb_to_id(unique_name), hidden_self);
+    rb_ivar_set(duped_context, rb_to_id(unique_name), hidden_self);
+
+    return Qnil;
 }
 
 static void
@@ -169,14 +172,13 @@ rb_unmirror_object(VALUE duped_context)
     RCLASS_IV_TBL(duped_context) = (struct st_table *) 0;
     restore_m_tbl(duped_context);
 #endif
+
+    return Qnil;
 }
   
 void
 Init_gen_eval()
 {
-
-    Init_object2module();
-
     rb_define_method(rb_cObject, "__mirror__", rb_mirror_object, 0);
     rb_define_method(rb_cObject, "__unmirror__", rb_unmirror_object, 0);
     rb_define_method(rb_cObject, "__set_hidden_self__", set_hidden_self, 1);

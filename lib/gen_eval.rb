@@ -1,6 +1,7 @@
 # (C) John Mair 2009, under the MIT licence
 
 require 'rbconfig'
+require 'object2module'
 
 direc = File.dirname(__FILE__)
 dlext = Config::CONFIG['DLEXT']
@@ -16,8 +17,8 @@ rescue LoadError => e
 end
 require "#{direc}/gen_eval/version"
 
-class Proc  
-    def __context__
+class Proc  #:nodoc:
+    def __context__ 
         eval('self', self.binding)
     end
 end
@@ -25,7 +26,33 @@ end
 
 class Object
     
-    def gen_eval(*objs, &block)
+  #  call-seq:
+  #     obj.gen_eval {| | block }                       => obj
+  #  
+  #  Works similarly to instance_eval except instance variables are
+  #  not looked up in _obj_. All instance methods of +Klass+ are
+  #  available but mutators must be wrapped in a +capture+ block.
+  #     
+  #     class Klass
+  #       attr_reader :age
+  #  
+  #       def hello(name)
+  #         "hello #{name}"
+  #       end
+  #
+  #       def set_age(age)
+  #         capture { 
+  #           @age = age
+  #         }
+  #       end
+  #     end
+  #     k = Klass.new
+  #     @name = "John"
+  #     k.gen_eval { hello(@name) }   #=> "hello John"
+  #
+  #     k.gen_eval { set_age(21) }
+  #     k.age #=> 21
+  def gen_eval(*objs, &block)
       raise "block needed" if !block
 
       objs = [self] if objs.empty?
@@ -48,7 +75,13 @@ class Object
     end
 
     alias_method :gen_eval_with, :gen_eval
-
+      
+    #  call-seq:
+    #     capture {| | block }                       => result
+    #  
+    #  Used in conjunction with +gen_eval+. Causes code in block
+    #  to be +instance_eval+'d with respect to the receiver of
+    #  the +gen_eval+.
     def capture(&block)
         raise "block needed" if !block
 
@@ -62,6 +95,7 @@ class Object
 
         result
     end
+    
 end
 
 

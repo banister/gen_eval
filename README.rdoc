@@ -1,0 +1,24 @@
+gen_eval is a homebrew version of instance_eval that eliminates the most annoying aspect of instance_eval.
+
+For example:
+
+    @x = 20
+    @y = 30
+    my_image.instance_eval {
+        circle @x, @y, 20 
+    }
+
+    => error @x not initialized
+
+In the above code you meant to access the local @x yet instance_eval looks up @x in the receiver (my_image).
+
+gen_eval, on the other hand, works as you'd expect, it looks up @x in the caller-context yet still invokes methods in the receiver-context.
+
+This means we can now do things like this:
+
+    @x = 20
+    @y = 30
+    image.gen_eval {
+        pixel @x, @y
+        circle @x, @y, 20 
+    }

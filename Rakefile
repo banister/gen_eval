@@ -5,6 +5,7 @@ require 'rake/rdoctask'
 require 'lib/gen_eval/version'
 
 dlext = Config::CONFIG['DLEXT']
+direc = File.dirname(__FILE__)
 
 CLEAN.include("ext/**/*.#{dlext}", "ext/**/.log", "ext/**/.o", "ext/**/*~", "ext/**/*#*", "ext/**/.obj", "ext/**/.def", "ext/**/.pdb")
 CLOBBER.include("**/*.#{dlext}", "**/*~", "**/*#*", "**/*.log", "**/*.o", "doc/**")
@@ -22,13 +23,46 @@ spec = Gem::Specification.new do |s|
     s.platform = 'i386-mingw32'
 #    s.extensions = FileList["ext/**/extconf.rb"]
     s.has_rdoc = true
-  s.files = ["Rakefile", "README.rdoc", "LICENSE", "lib/gen_eval.rb", "lib/1.8/gen_eval.#{dlext}", "lib/1.9/gen_eval.#{dlext}"] + FileList["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c"].to_a
+    s.add_dependency("object2module",">=0.3.0")
+    s.files = ["Rakefile", "README.rdoc", "LICENSE", "lib/gen_eval.rb", "lib/1.8/gen_eval.#{dlext}", "lib/1.9/gen_eval.#{dlext}"] + FileList["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c"].to_a
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|
     pkg.need_zip = false
     pkg.need_tar = false
 end
+
+ext_direc = "#{direc}/ext/gen_eval"
+
+file "#{ext_direc}/Makefile" => "#{ext_direc}/extconf.rb" do
+  chdir(ext_direc) do
+    sh 'ruby extconf.rb'
+  end
+end
+
+directory "#{direc}/lib/1.9"
+directory "#{direc}/lib/1.8"
+
+file "#{ext_direc}/gen_eval.#{dlext}" => ["#{ext_direc}/Makefile", "#{direc}/lib/1.9", "#{direc}/lib/1.8"] do
+  chdir(ext_direc) do
+    sh 'make'
+
+    if RUBY_VERSION =~ /1.9/
+      cp "gen_eval.#{dlext}", "#[direc}/lib/1.9/"
+      puts "built gen_eval.#{dlext} and copied to #{direc}/lib/1.9"
+    elsif RUBY_VERSION =~ /1.8/
+      cp "gen_eval.#{dlext}", "#[direc}/lib/1.8/"
+      puts "built gen_eval.#{dlext} and copied to #{direc}/lib/1.8"
+    else
+      raise "Error, Rakefile only supports Ruby 1.8 and 1.9"
+    end
+  end
+end
+
+task :compile => "#{ext_direc}/gen_eval.#{dlext}"
+
+    
+  
 
 # Rake::ExtensionTask.new('mult', spec)  do |ext|
 #     ext.config_script = 'extconf.rb' 
@@ -38,6 +72,6 @@ end
 
 Rake::RDocTask.new do |rd|
   rd.main = "README.rdoc"
-  rd.rdoc_files.include("README.rdoc", "ext/gen_eval/*.c")
+  rd.rdoc_files.include("README.rdoc", "lib/gen_eval.rb")
 end
 
