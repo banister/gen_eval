@@ -20,11 +20,11 @@ spec = Gem::Specification.new do |s|
     s.date = Time.now.strftime '%Y-%m-%d'
     s.require_path = 'lib'
     s.homepage = "http://banisterfiend.wordpress.com"
-    s.platform = 'i386-mingw32'
-#    s.extensions = FileList["ext/**/extconf.rb"]
+    s.platform = Gem::Platform::RUBY #'i386-mswin32'
+    s.extensions = FileList["ext/**/extconf.rb"]
     s.has_rdoc = true
     s.add_dependency("object2module",">=0.3.0")
-    s.files = ["Rakefile", "README.rdoc", "LICENSE", "lib/gen_eval.rb", "lib/1.8/gen_eval.#{dlext}", "lib/1.9/gen_eval.#{dlext}"] + FileList["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c"].to_a
+    s.files = ["Rakefile", "README.rdoc", "LICENSE", "lib/gen_eval.rb"] + FileList["ext/**/extconf.rb", "ext/**/*.h", "ext/**/*.c", "lib/gen_eval/version.rb"].to_a
 end
 
 Rake::GemPackageTask.new(spec) do |pkg|

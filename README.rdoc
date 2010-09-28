@@ -1,4 +1,4 @@
-gen_eval is a homebrew version of instance_eval that eliminates the most annoying aspect of instance_eval.
+gen_eval is a homebrew version of instance_eval that eliminates the most annoying aspect of its use:
 
 For example:
 
@@ -10,7 +10,7 @@ For example:
 
     => error @x not initialized
 
-In the above code you meant to access the local @x yet instance_eval looks up @x in the receiver (my_image).
+In the above code the programmer means to access the local @x yet instance_eval looks up @x in the receiver (my_image).
 
 gen_eval, on the other hand, works as you'd expect, it looks up @x in the caller-context yet still invokes methods in the receiver-context.
 
