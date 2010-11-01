@@ -80,9 +80,9 @@ redirect_iv_for_object(VALUE obj, VALUE dest)
     /* ensure ivars are stored on the heap and not embedded */
     force_iv_tbl(obj);
 
-    if (!(RBASIC(dest)->flags & ROBJECT_EMBED) && ROBJECT_IVPTR(dest)) {
-        rb_raise(rb_eArgError, "im sorry gen_eval does not yet work with this type of ROBJECT");
-    }
+    /* if (!(RBASIC(dest)->flags & ROBJECT_EMBED) && ROBJECT_IVPTR(dest)) { */
+    /*     rb_raise(rb_eArgError, "im sorry gen_eval does not yet work with this type of ROBJECT"); */
+    /* } */
     if (RBASIC(obj)->flags & ROBJECT_EMBED) {
         rb_raise(rb_eArgError, "im sorry gen_eval does not yet work with R_OBJECT_EMBED types");
     }
@@ -114,13 +114,16 @@ rb_mirror_object(VALUE context)
     VALUE duped_context;
   
 #ifdef RUBY_19
-    if(TYPE(context) == T_OBJECT)
-        duped_context = rb_funcall(rb_cObject, rb_intern("new"), 0);
-    else 
-        duped_context = rb_funcall(rb_cClass, rb_intern("new"), 0);
-
+    if(TYPE(context) == T_OBJECT) {
+        NEWOBJ(duped_context, struct RObject);
+        OBJSETUP(duped_context, rb_cObject, T_OBJECT);
+        FL_SET(duped_context, T_ICLASS);
+    }
+    else  {
+      duped_context = create_class(T_ICLASS, rb_cClass);
+    }
 #else
-    duped_context = rb_funcall(rb_cClass, rb_intern("new"), 0);
+    duped_context = create_class(T_ICLASS, rb_cClass);
 #endif    
     
     /* the duped_context shares the context's iv_tbl.
@@ -145,8 +148,6 @@ rb_mirror_object(VALUE context)
         RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
         RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
 #endif        
-
-        
     }
 
     /* ensure singleton exists */
