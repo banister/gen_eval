@@ -6,8 +6,10 @@ require './lib/gen_eval/version'
 dlext = Config::CONFIG['DLEXT']
 direc = File.dirname(__FILE__)
 
-CLEAN.include("ext/**/*.#{dlext}", "ext/**/.log", "ext/**/.o", "ext/**/*~", "ext/**/*#*", "ext/**/.obj", "ext/**/.def", "ext/**/.pdb")
 CLOBBER.include("**/*.#{dlext}", "**/*~", "**/*#*", "**/*.log", "**/*.o", "doc/**")
+CLEAN.include("ext/**/*.#{dlext}", "ext/**/.log", "ext/**/.o", "ext/**/*~",
+              "ext/**/*#*", "ext/**/.obj", "ext/**/.def",
+              "ext/**/.pdb", "flymake*", "flymake*.*")
 
 def apply_spec_defaults(s)
     s.name = "gen_eval"
@@ -56,3 +58,39 @@ namespace :ruby do
   end
 end
 
+directories = ["#{direc}/lib/1.8", "#{direc}/lib/1.9"]
+directories.each { |d| directory d }
+
+desc "build the 1.8 and 1.9 binaries from source and copy to lib/"
+task :compile => directories do
+  build_for = proc do |pik_ver, ver|
+    sh %{ \
+          c:\\devkit\\devkitvars.bat && \
+          pik #{pik_ver} && \
+          ruby extconf.rb && \
+          make clean && \
+          make && \
+          cp *.so #{direc}/lib/#{ver} \
+        }
+  end
+  
+  chdir("#{direc}/ext/gen_eval") do
+    build_for.call("187", "1.8")
+    build_for.call("192", "1.9")
+  end
+end
+
+desc "build all platform gems at once"
+task :gems => [:clean, :rmgems, "mingw32:gem", "mswin32:gem", "ruby:gem"]
+
+desc "remove all platform gems"
+task :rmgems => ["ruby:clobber_package"]
+
+desc "build and push latest gems"
+task :pushgems => :gems do
+  chdir("#{direc}/pkg") do
+    Dir["*.gem"].each do |gemfile|
+      sh "gem push #{gemfile}"
+    end
+  end
+end
