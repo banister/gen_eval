@@ -6,48 +6,6 @@
 #include <ruby.h>
 #include "compat.h"
 
-VALUE
-retrieve_hidden_self(VALUE duped_context)
-{
-  VALUE thread_id, unique_name, hidden_self;
-    
-  /* retrieve hidden self (if it exists) */
-  thread_id = rb_funcall(rb_obj_id(rb_thread_current()), rb_intern("to_s"), 0);
-  unique_name = rb_str_plus(rb_str_new2("__hidden_self__"), thread_id);
-  hidden_self = rb_ivar_get(duped_context, rb_to_id(unique_name));
-
-  return hidden_self;
-}
-
-VALUE
-remove_hidden_self(VALUE duped_context)
-{
-  /* retrieve hidden self (if it exists) */
-  VALUE thread_id, unique_name;
-    
-  thread_id = rb_funcall(rb_obj_id(rb_thread_current()), rb_intern("to_s"), 0);
-  unique_name = rb_str_plus(rb_str_new2("__hidden_self__"), thread_id);
-    
-  rb_obj_remove_instance_variable(duped_context, unique_name);
-
-  return Qnil;
-}
-
-VALUE
-set_hidden_self(VALUE duped_context, VALUE hidden_self)
-{
-  VALUE thread_id, unique_name;
-    
-  /* generate a unique (thread safe) name for the hidden self  */
-  thread_id = rb_funcall(rb_obj_id(rb_thread_current()), rb_intern("to_s"), 0);
-  unique_name = rb_str_plus(rb_str_new2("__hidden_self__"), thread_id);
-
-  /* store self in hidden var in duped context */
-  rb_ivar_set(duped_context, rb_to_id(unique_name), hidden_self);
-
-  return Qnil;
-}
-
 static void
 save_m_tbl(VALUE klass)
 {
@@ -86,9 +44,6 @@ redirect_iv_for_object(VALUE obj, VALUE dest)
   /* ensure ivars are stored on the heap and not embedded */
   force_iv_tbl(obj);
 
-  /* if (!(RBASIC(dest)->flags & ROBJECT_EMBED) && ROBJECT_IVPTR(dest)) { */
-  /*     rb_raise(rb_eArgError, "im sorry gen_eval does not yet work with this type of ROBJECT"); */
-  /* } */
   if (RBASIC(obj)->flags & ROBJECT_EMBED) {
     rb_raise(rb_eArgError, "im sorry gen_eval does not yet work with R_OBJECT_EMBED types");
   }
@@ -124,10 +79,11 @@ rb_mirror_object(VALUE context)
     OBJSETUP(duped_context, rb_cObject, T_OBJECT);
   }
   else  {
-    duped_context = create_class(T_ICLASS, rb_cClass);
+    //    duped_context = create_class(T_ICLASS, rb_cClass);
+    duped_context = rb_funcall(rb_cClass, rb_intern("new"), 0);
   }
 #else
-  duped_context = create_class(T_ICLASS, rb_cClass);
+  duped_context = rb_funcall(rb_cClass, rb_intern("new"), 0); //create_class(T_ICLASS, rb_cClass);
 #endif    
     
   /* the duped_context shares the context's iv_tbl.
@@ -143,13 +99,13 @@ rb_mirror_object(VALUE context)
     if(TYPE(context) == T_OBJECT)
       redirect_iv_for_object(context, duped_context);
     else {
-      save_m_tbl(duped_context);
-      RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
+      //save_m_tbl(duped_context);
+      //  RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
       RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
     }
 #else
-    save_m_tbl(duped_context);
-    RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
+    //save_m_tbl(duped_context);
+    //RCLASS_M_TBL(duped_context) = (struct st_table *) RCLASS_M_TBL(context);
     RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
 #endif        
   }
@@ -184,11 +140,8 @@ rb_unmirror_object(VALUE duped_context)
 void
 Init_gen_eval()
 {
-  rb_define_method(rb_cObject, "__mirror__", rb_mirror_object, 0);
-  rb_define_method(rb_cObject, "__unmirror__", rb_unmirror_object, 0);
-  rb_define_method(rb_cObject, "__set_hidden_self__", set_hidden_self, 1);
-  rb_define_method(rb_cObject, "__retrieve_hidden_self__", retrieve_hidden_self, 0);
-  rb_define_method(rb_cObject, "__remove_hidden_self__", retrieve_hidden_self, 0);
+  rb_define_method(rb_cObject, "mirror", rb_mirror_object, 0);
+  rb_define_method(rb_cObject, "unmirror", rb_unmirror_object, 0);
 }
 
     
