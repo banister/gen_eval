@@ -12,7 +12,9 @@ rb_mirror_object(VALUE context)
 {
   VALUE duped_context;
   
-  duped_context = rb_funcall(rb_cClass, rb_intern("new"), 0);
+  duped_context = rb_funcall(rb_cObject, rb_intern("new"), 0);
+
+  rb_iv_set(context, "_", Qtrue);
     
   RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
   
