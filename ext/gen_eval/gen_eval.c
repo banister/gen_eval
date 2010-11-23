@@ -6,6 +6,13 @@
 #include <ruby.h>
 #include "compat.h"
 
+static VALUE cRubyObjectIv;
+
+typedef struct RubyObjectIv {
+  long numiv;
+  VALUE * ivptr;
+  struct st_table * iv_index_tbl;
+} RubyObjectIv;
 
 VALUE
 rb_mirror_object(VALUE context)
@@ -14,24 +21,56 @@ rb_mirror_object(VALUE context)
   
   duped_context = rb_funcall(rb_cObject, rb_intern("new"), 0);
 
-  rb_iv_set(context, "_", Qtrue);
-    
-  RCLASS_IV_TBL(duped_context) = (struct st_table *) RCLASS_IV_TBL(context);
+  rb_iv_set(context, "__force_iv_tbl_1__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_2__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_3__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_4__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_5__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_6__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_7__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_8__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_9__", Qtrue);
+  rb_iv_set(context, "__force_iv_tbl_10__", Qtrue);
   
+  rb_iv_set(context, "_", Qtrue);
+
+  RubyObjectIv * old_iv = ALLOC(RubyObjectIv);
+  old_iv->ivptr = ROBJECT(duped_context)->as.heap.ivptr;
+  old_iv->numiv = ROBJECT(duped_context)->as.heap.numiv;
+  old_iv->iv_index_tbl= ROBJECT(duped_context)->as.heap.iv_index_tbl;
+
+  ROBJECT(duped_context)->as.heap.ivptr = ROBJECT(context)->as.heap.ivptr;
+  ROBJECT(duped_context)->as.heap.numiv = ROBJECT(context)->as.heap.numiv;
+  ROBJECT(duped_context)->as.heap.iv_index_tbl = ROBJECT(context)->as.heap.iv_index_tbl;
+
+  rb_iv_set(duped_context, "__old_iv__", Data_Wrap_Struct(cRubyObjectIv, 0, free, old_iv));
+
+    
   return duped_context;
 }
 
 VALUE
 rb_unmirror_object(VALUE duped_context)
 {
-  RCLASS_IV_TBL(duped_context) = (struct st_table *) 0;
+  
+  RubyObjectIv * restored_iv;
+  VALUE wrapped_iv = rb_iv_get(duped_context, "__old_iv__");
+  
+  Data_Get_Struct(wrapped_iv, RubyObjectIv, restored_iv);
 
+  ROBJECT(duped_context)->as.heap.ivptr = restored_iv->ivptr;
+  ROBJECT(duped_context)->as.heap.numiv = restored_iv->numiv;
+  ROBJECT(duped_context)->as.heap.iv_index_tbl = restored_iv->iv_index_tbl;
+  RBASIC(duped_context)->flags |= ROBJECT_EMBED;
+  
   return Qnil;
 }
   
 void
 Init_gen_eval()
 {
+  cRubyObjectIv = rb_define_class("RubyObjectIv", rb_cObject);
+  
   rb_define_method(rb_cObject, "mirror", rb_mirror_object, 0);
   rb_define_method(rb_cObject, "unmirror", rb_unmirror_object, 0);
 }
